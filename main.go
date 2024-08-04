@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func contactHandler(w http.ResponseWriter, r *http.Request) {
@@ -10,7 +12,7 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<h1>Contact Page</h1>")
 }
 
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
+func homeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "text/html; charset=utf-8")
 	fmt.Fprint(w, "<h1>Hello every body</h1>")
 }
@@ -28,7 +30,7 @@ type Router struct{}
 func (router Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/":
-		HomeHandler(w, r)
+		homeHandler(w, r)
 	case "/contact":
 		contactHandler(w, r)
 	case "/faq":
@@ -38,7 +40,14 @@ func (router Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func main() {
-	var router Router
+	r := chi.NewRouter()
+	r.Get("/", homeHandler)
+	r.Get("/contact", contactHandler)
+	r.Get("/faq", faqHandler)
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Page not found", http.StatusNotFound)
+	})
+
 	fmt.Println("Starting Server on port 8080")
-	http.ListenAndServe(":8080", router)
+	http.ListenAndServe(":8080", r)
 }
